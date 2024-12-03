@@ -37,21 +37,9 @@ const App = () => {
   };
 
   // Function to redirect to Flask backend to start Spotify authentication
-  const handleSpotifyLogin = async () => {
-    try {
-      const response = await fetch("http://localhost:5001/login");
-      const data = await response.json();
-
-      if (data.access_token) {
-        // Store the access token in localStorage for later use
-        localStorage.setItem("access_token", data.access_token);
-        window.location.href = "http://localhost:3000";  // Redirect to your app after login
-      } else {
-        console.error("No access token received from backend");
-      }
-    } catch (error) {
-      console.error("Error during Spotify login:", error);
-    }
+  const handleSpotifyLogin = () => {
+    // Directly redirect the user to the Flask backend login route
+    window.location.href = "http://localhost:5001/login";
   };
 
   return (

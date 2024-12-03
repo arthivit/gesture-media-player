@@ -3,10 +3,10 @@ import React, { useState } from "react";
 const App = () => {
   const [gesture, setGesture] = useState("None");
 
-  const handleGesture = (detectedGesture) => {
+  const handleGesture = async (detectedGesture) => {
     setGesture(detectedGesture);
 
-    // Handle media controls based on the gesture
+    // Handle UI or local actions
     switch (detectedGesture) {
       case "Play":
         console.log("Playing media");
@@ -22,6 +22,20 @@ const App = () => {
         break;
       default:
         console.log("Gesture not recognized");
+    }
+
+    // Send gesture to the backend
+    try {
+      const response = await fetch("http://localhost:5000/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: detectedGesture }),
+      });
+
+      const data = await response.json();
+      console.log("Server response:", data);
+    } catch (error) {
+      console.error("Error sending gesture to server:", error);
     }
   };
 

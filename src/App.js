@@ -1,47 +1,57 @@
 import React, { useState } from "react";
+import GestureDetector from "./components/GestureDetector";  // Assuming you have this file for gesture detection
+import MediaControls from "./components/mediaControls";      // Assuming you have this file for media controls
 
 const App = () => {
   const [gesture, setGesture] = useState("None");
 
-  const handleGesture = async (detectedGesture) => {
+  // Function to handle detected gestures and update the state
+  const handleGestureDetected = (detectedGesture) => {
     setGesture(detectedGesture);
+    console.log(`Detected Gesture: ${detectedGesture}`);
 
-    // Handle UI or local actions
-    switch (detectedGesture) {
-      case "Play":
-        console.log("Playing media");
-        break;
-      case "Pause":
-        console.log("Pausing media");
-        break;
-      case "Next":
-        console.log("Skipping to next");
-        break;
-      case "Previous":
-        console.log("Going to previous");
-        break;
-      default:
-        console.log("Gesture not recognized");
+    // Get the access token from localStorage
+    const accessToken = localStorage.getItem("access_token");
+
+    if (!accessToken) {
+      console.log("No access token found");
+      return;
     }
 
-    // Send gesture to the backend to control Spotify
-    try {
-      const response = await fetch("http://localhost:5001/control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: detectedGesture }),
+    // Send the gesture to the backend with access token in headers
+    fetch("http://localhost:5001/control", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,  // Include the access token
+      },
+      body: JSON.stringify({ action: detectedGesture }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Server response:", data);
+      })
+      .catch((error) => {
+        console.error("Error sending gesture to server:", error);
       });
-
-      const data = await response.json();
-      console.log("Server response:", data);
-    } catch (error) {
-      console.error("Error sending gesture to server:", error);
-    }
   };
 
-  // Function to redirect to the Flask backend to start Spotify authentication
-  const handleSpotifyLogin = () => {
-    window.location.href = 'http://localhost:5001/login';  // Redirect to Flask login route for Spotify OAuth
+  // Function to redirect to Flask backend to start Spotify authentication
+  const handleSpotifyLogin = async () => {
+    try {
+      const response = await fetch("http://localhost:5001/login");
+      const data = await response.json();
+
+      if (data.access_token) {
+        // Store the access token in localStorage for later use
+        localStorage.setItem("access_token", data.access_token);
+        window.location.href = "http://localhost:3000";  // Redirect to your app after login
+      } else {
+        console.error("No access token received from backend");
+      }
+    } catch (error) {
+      console.error("Error during Spotify login:", error);
+    }
   };
 
   return (
@@ -51,11 +61,11 @@ const App = () => {
         <h2>Detected Gesture: {gesture}</h2>
       </div>
 
-      {/* Buttons to simulate gestures */}
-      <button onClick={() => handleGesture("Play")}>Simulate Play Gesture</button>
-      <button onClick={() => handleGesture("Pause")}>Simulate Pause Gesture</button>
-      <button onClick={() => handleGesture("Next")}>Simulate Next Gesture</button>
-      <button onClick={() => handleGesture("Previous")}>Simulate Previous Gesture</button>
+      {/* Gesture Detection */}
+      <GestureDetector onGestureDetected={handleGestureDetected} />
+
+      {/* Media Controls (buttons for actions) */}
+      <MediaControls onGesture={handleGestureDetected} />
 
       {/* Spotify Login button */}
       <div style={{ marginTop: "20px" }}>

@@ -1,0 +1,23 @@
+/* src/components/MediaControls/MediaControls.css */
+.media-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .media-controls button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    background-color: #1db954;
+    color: white;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  
+  .media-controls button:hover {
+    background-color: #1ed760;
+  }
+  

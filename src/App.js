@@ -24,9 +24,9 @@ const App = () => {
         console.log("Gesture not recognized");
     }
 
-    // Send gesture to the backend
+    // Send gesture to the backend to control Spotify
     try {
-      const response = await fetch("http://localhost:5000/control", {
+      const response = await fetch("http://localhost:5001/control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: detectedGesture }),
@@ -39,16 +39,28 @@ const App = () => {
     }
   };
 
+  // Function to redirect to the Flask backend to start Spotify authentication
+  const handleSpotifyLogin = () => {
+    window.location.href = 'http://localhost:5001/login';  // Redirect to Flask login route for Spotify OAuth
+  };
+
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       <h1>Gesture-Based Media Player</h1>
       <div>
         <h2>Detected Gesture: {gesture}</h2>
       </div>
+
+      {/* Buttons to simulate gestures */}
       <button onClick={() => handleGesture("Play")}>Simulate Play Gesture</button>
       <button onClick={() => handleGesture("Pause")}>Simulate Pause Gesture</button>
       <button onClick={() => handleGesture("Next")}>Simulate Next Gesture</button>
       <button onClick={() => handleGesture("Previous")}>Simulate Previous Gesture</button>
+
+      {/* Spotify Login button */}
+      <div style={{ marginTop: "20px" }}>
+        <button onClick={handleSpotifyLogin}>Login to Spotify</button>
+      </div>
     </div>
   );
 };

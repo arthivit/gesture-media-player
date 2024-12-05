@@ -69,6 +69,7 @@ def callback():
         # Redirect back to the React app with the access_token as a query parameter
         # Assuming your app is running on localhost:3000
         redirect_url = f"http://localhost:3000?access_token={access_token}&refresh_token={refresh_token}"
+        logging.debug(f"Redirecting to: {redirect_url}")
         return redirect(redirect_url)
 
     else:
@@ -76,16 +77,22 @@ def callback():
         return jsonify({"error": "Unable to get token"}), 400
 
 
-
 @app.route("/control", methods=["POST"])
 def control():
     logging.debug("Control route hit")
     action = request.json.get("action")
-    access_token = session.get("access_token")
+    logging.debug(f"action token from body: {action}")
+    access_token = request.headers.get("Authorization")
+    logging.debug(f"access token from header: {access_token}")
 
     if not access_token:
         logging.error("Unauthorized: No access token.")
         return jsonify({"error": "Unauthorized, please log in"}), 401
+
+    # Remove the "Bearer " part from the token if it's included in the header
+    access_token = access_token.split(" ")[1] if "Bearer " in access_token else access_token
+
+    logging.debug(f"Access token received: {access_token}")
 
     headers = {"Authorization": f"Bearer {access_token}"}
 

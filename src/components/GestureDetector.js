@@ -5,7 +5,6 @@ export const detectGesture = (videoElement, onGestureDetected) => {
   console.log("Starting gesture detection...");
 
   // Simulate gesture detection using real input (replace this with actual gesture recognition code)
-  // For now, we simulate gestures when start detection is toggled
   const gestures = ["Play", "Pause", "Next", "Previous", "None"];
   const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
 
@@ -14,8 +13,8 @@ export const detectGesture = (videoElement, onGestureDetected) => {
 };
 
 // GestureDetector component
-const GestureDetector = ({ onGestureDetected }) => {
-  const [isDetecting, setIsDetecting] = useState(false);
+const GestureDetector = ({ onGestureDetected, isActive }) => {
+  const [isDetecting, setIsDetecting] = useState(isActive);
 
   useEffect(() => {
     let gestureDetectionInterval;

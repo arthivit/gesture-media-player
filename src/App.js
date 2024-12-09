@@ -36,7 +36,7 @@ const App = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
+        "Authorization": `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ action: detectedGesture }),
       credentials: "include", // Ensure cookies are sent for session handling

@@ -83,7 +83,7 @@ def control():
     action = request.json.get("action")
     logging.debug(f"action token from body: {action}")
     access_token = request.headers.get("Authorization")
-    logging.debug(f"access token from header: {access_token}")
+    logging.debug(f'access token from header: {access_token}')
 
     if not access_token:
         logging.error("Unauthorized: No access token.")

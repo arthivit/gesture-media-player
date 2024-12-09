@@ -1,42 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import GestureDetector from "./components/GestureDetector";
+import MediaControls from "./components/mediaControls";
 
 const App = () => {
   const [gesture, setGesture] = useState("None");
 
-  const handleGesture = async (detectedGesture) => {
+  useEffect(() => {
+    // Extract access token and refresh token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get("access_token");
+    const refreshToken = urlParams.get("refresh_token");
+
+    if (accessToken && refreshToken) {
+      // Store tokens in localStorage
+      localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("refresh_token", refreshToken);
+      console.log("Tokens stored in localStorage");
+    }
+  }, []);
+
+  const handleGestureDetected = (detectedGesture) => {
     setGesture(detectedGesture);
+    console.log(`Detected Gesture: ${detectedGesture}`);
 
-    // Handle UI or local actions
-    switch (detectedGesture) {
-      case "Play":
-        console.log("Playing media");
-        break;
-      case "Pause":
-        console.log("Pausing media");
-        break;
-      case "Next":
-        console.log("Skipping to next");
-        break;
-      case "Previous":
-        console.log("Going to previous");
-        break;
-      default:
-        console.log("Gesture not recognized");
+    const accessToken = localStorage.getItem("access_token");
+    console.log(`Access Token: ${accessToken}`);
+
+    if (!accessToken) {
+      console.error("No access token found");
+      return;
     }
 
-    // Send gesture to the backend
-    try {
-      const response = await fetch("http://localhost:5000/control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: detectedGesture }),
-      });
+    // Send the detected gesture to the backend
+    fetch("http://localhost:5001/control", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ action: detectedGesture }),
+      credentials: "include", // Ensure cookies are sent for session handling
+    })
+      .then((response) => response.json())
+      .then((data) => console.log("Server response:", data))
+      .catch((error) => console.error("Error sending gesture to server:", error));
+  };
 
-      const data = await response.json();
-      console.log("Server response:", data);
-    } catch (error) {
-      console.error("Error sending gesture to server:", error);
-    }
+  const handleSpotifyLogin = () => {
+    window.location.href = "http://localhost:5001/login";
   };
 
   return (
@@ -45,10 +56,13 @@ const App = () => {
       <div>
         <h2>Detected Gesture: {gesture}</h2>
       </div>
-      <button onClick={() => handleGesture("Play")}>Simulate Play Gesture</button>
-      <button onClick={() => handleGesture("Pause")}>Simulate Pause Gesture</button>
-      <button onClick={() => handleGesture("Next")}>Simulate Next Gesture</button>
-      <button onClick={() => handleGesture("Previous")}>Simulate Previous Gesture</button>
+
+      <GestureDetector onGestureDetected={handleGestureDetected} />
+      <MediaControls onGestureDetected={handleGestureDetected} />
+
+      <div style={{ marginTop: "20px" }}>
+        <button onClick={handleSpotifyLogin}>Login to Spotify</button>
+      </div>
     </div>
   );
 };

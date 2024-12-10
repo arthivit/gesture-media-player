@@ -8,6 +8,7 @@ const App = () => {
     name: "No song playing",
     artists: "Unknown",
     album: "Unknown",
+    albumCover: "", // For storing album cover URL
   });
   const [shuffleState, setShuffleState] = useState(false); // Track shuffle state
   const [loopState, setLoopState] = useState("off");
@@ -60,8 +61,28 @@ const App = () => {
     // Show notification for the detected gesture
     showNotification(`Gesture Recognized: ${detectedGesture}`);
   };
+    const fetchAlbumCover = (albumId, accessToken) => {
+      fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          const albumCover = data.images && data.images.length > 0 ? data.images[0].url : "";
+          setCurrentSong((prevState) => ({
+            ...prevState,
+            albumCover: albumCover,
+          }));
+        })
+        .catch((error) => console.error("Error fetching album cover:", error));
+    };
+    
 
   // Function to fetch current song info
+  // Function to fetch current song info
+// Function to fetch current song info
   const fetchSongInfo = (accessToken) => {
     fetch("https://api.spotify.com/v1/me/player/currently-playing", {
       method: "GET",
@@ -72,12 +93,22 @@ const App = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data && data.item) {
-          const { name, artists, album } = data.item;
+          const { name, artists, album, images } = data.item;
+
+          // Set the album cover from the images array in currently-playing data
+          const albumCover = images && images.length > 0 ? images[0].url : "";
+
           setCurrentSong({
             name,
             artists: artists.map((artist) => artist.name).join(", "),
             album: album.name,
+            albumCover: albumCover,
           });
+
+          // If the album cover is missing, try to fetch it using the album ID
+          if (!albumCover && album.id) {
+            fetchAlbumCover(album.id, accessToken);
+          }
         } else {
           console.log("No song is currently playing.");
         }
@@ -192,7 +223,18 @@ const App = () => {
         <p><strong>Song:</strong> {currentSong.name}</p>
         <p><strong>Artists:</strong> {currentSong.artists}</p>
         <p><strong>Album:</strong> {currentSong.album}</p>
+
+        {/* Render the album cover */}
+        {currentSong.albumCover && (
+          <img 
+            src={currentSong.albumCover} 
+            alt={`Album cover for ${currentSong.name}`} 
+            style={{ width: "200px", height: "200px", borderRadius: "10px" }} 
+          />
+        )}
       </div>
+
+
 
       <GestureDetector onGestureDetected={handleGestureDetected} />
       <MediaControls onGestureDetected={handleGestureDetected} />

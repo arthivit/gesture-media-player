@@ -34,7 +34,7 @@ def login():
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": REDIRECT_URI,
-            "scope": "user-library-read user-read-playback-state user-modify-playback-state",
+            "scope": "user-library-read user-read-playback-state user-modify-playback-state user-read-currently-playing",
         })
     )
     logging.debug(f"Redirecting to: {auth_url}")

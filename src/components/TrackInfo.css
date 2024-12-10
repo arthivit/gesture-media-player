@@ -1,0 +1,32 @@
+.now-playing {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    background-color: #1d1d1d;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .album-cover {
+    width: 100px;
+    height: 100px;
+    margin-right: 20px;
+    border-radius: 8px;
+  }
+  
+  .track-details {
+    color: white;
+  }
+  
+  .track-details h3 {
+    font-size: 16px;
+    margin: 0;
+  }
+  
+  .track-details p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #b3b3b3;
+  }
+  

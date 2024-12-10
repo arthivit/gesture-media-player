@@ -25,6 +25,8 @@ const MediaControls = ({ onGestureDetected }) => {
       <button onClick={() => handleGesture("Previous")}>Previous</button>
       <button onClick={() => handleGesture("Volume Up")}>Volume Up</button>
       <button onClick={() => handleGesture("Volume Down")}>Volume Down</button>
+      <button onClick={() => handleGesture("Shuffle")}>Shuffle</button>
+      <button onClick={() => handleGesture("Loop")}>Loop</button>
     </div>
   );
 };

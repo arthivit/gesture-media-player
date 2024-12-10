@@ -24,7 +24,6 @@ logging.debug(f"Client Secret: {CLIENT_SECRET}")
 
 app.secret_key = os.getenv("SESSION_SECRET_KEY")
 
-
 @app.route("/login")
 def login():
     session.clear()
@@ -40,7 +39,6 @@ def login():
     )
     logging.debug(f"Redirecting to: {auth_url}")
     return redirect(auth_url)
-
 
 @app.route("/callback")
 def callback():
@@ -67,7 +65,6 @@ def callback():
         logging.debug("Access token retrieved successfully.")
 
         # Redirect back to the React app with the access_token as a query parameter
-        # Assuming your app is running on localhost:3000
         redirect_url = f"http://localhost:3000?access_token={access_token}&refresh_token={refresh_token}"
         logging.debug(f"Redirecting to: {redirect_url}")
         return redirect(redirect_url)
@@ -76,6 +73,74 @@ def callback():
         logging.error(f"Error retrieving tokens: {response.json()}")
         return jsonify({"error": "Unable to get token"}), 400
 
+
+@app.route("/current-track", methods=["GET"])
+def current_track():
+    access_token = request.headers.get("Authorization").split(" ")[1]
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    # Fetch current playback info from Spotify
+    response = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+
+    if response.status_code == 200:
+        track_data = response.json()
+        track_info = {
+            "name": track_data['name'],
+            "artist": track_data['artists'][0]['name'],
+            "albumCover": track_data['album']['images'][0]['url']
+        }
+        return jsonify(track_info)
+    else:
+        return jsonify({"error": "Unable to fetch track info"}), 500
+
+def get_current_shuffle_state(access_token):
+    """
+    Get the current shuffle state of the player.
+    :param access_token: Spotify access token
+    :return: True if shuffle is on, False if shuffle is off
+    """
+    url = "https://api.spotify.com/v1/me/player"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+    }
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        return data.get("shuffle_state", False)  # Return current shuffle state (True or False)
+    else:
+        logging.error(f"Error fetching player state: {response.status_code}")
+        return None
+
+def toggle_shuffle(access_token):
+    """
+    Toggle shuffle state: if it's on, turn it off, and vice versa.
+    :param access_token: Spotify access token
+    """
+    # Get current shuffle state
+    current_shuffle = get_current_shuffle_state(access_token)
+
+    if current_shuffle is None:
+        return "Error: Unable to fetch current shuffle state."
+
+    # Toggle shuffle state
+    new_state = not current_shuffle  # If shuffle is True, turn it off, else turn it on
+    url = "https://api.spotify.com/v1/me/player/shuffle"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+    }
+    params = {
+        "state": new_state,
+    }
+
+    response = requests.put(url, headers=headers, params=params)
+
+    if response.status_code == 200:
+        return f"Shuffle {'enabled' if new_state else 'disabled'} successfully."
+    else:
+        logging.error(f"Error updating shuffle state: {response.status_code}")
+        return "Error: Unable to update shuffle state."
 
 @app.route("/control", methods=["POST"])
 def control():
@@ -104,8 +169,37 @@ def control():
         response = requests.post(f"{SPOTIFY_API_URL}/next", headers=headers)
     elif action == "Previous":
         response = requests.post(f"{SPOTIFY_API_URL}/previous", headers=headers)
+    elif action in ["Volume Up", "Volume Down"]:
+        current_volume_response = requests.get(SPOTIFY_API_URL, headers=headers)
+        if current_volume_response.status_code != 200:
+            logging.error(f"Failed to retrieve current playback info: {current_volume_response.status_code}")
+            return jsonify({"error": "Unable to get current volume"}), 500
+        current_volume = current_volume_response.json().get("device", {}).get("volume_percent", 50)
+        logging.debug(f"Current volume: {current_volume}")
+        # Adjust the volume
+        if action == "Volume Up":
+            new_volume = min(100, current_volume + 10)
+        else:  # "Volume Down"
+            new_volume = max(0, current_volume - 10)
+        response = requests.put(f"{SPOTIFY_API_URL}/volume?volume_percent={new_volume}", headers=headers)
+    elif action == "Shuffle":
+        result = toggle_shuffle(access_token)
+        return jsonify({"message": result}), 200
+    elif action == "Loop":
+        if loop_state == "off":
+            loop_state = "context"
+            logging.debug("Loop turned on for context")
+            response = requests.put(f"{SPOTIFY_API_URL}/repeat?state=context", headers=headers)
+        elif loop_state == "context":
+            loop_state = "track"
+            logging.debug("Loop turned on for track")
+            response = requests.put(f"{SPOTIFY_API_URL}/repeat?state=track", headers=headers)
+        elif loop_state == "track":
+            loop_state = "off"
+            logging.debug("Loop turned off")
+            response = requests.put(f"{SPOTIFY_API_URL}/repeat?state=off", headers=headers)
     else:
-        logging.error("Unknown action.")
+        logging.error("Unknown action. (python)")
         return jsonify({"error": "Unknown action"}), 400
 
     if response.status_code in (200, 204):

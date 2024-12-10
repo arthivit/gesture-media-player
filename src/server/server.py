@@ -94,53 +94,39 @@ def current_track():
         return jsonify({"error": "Unable to fetch track info"}), 500
 
 def get_current_shuffle_state(access_token):
-    """
-    Get the current shuffle state of the player.
-    :param access_token: Spotify access token
-    :return: True if shuffle is on, False if shuffle is off
-    """
     url = "https://api.spotify.com/v1/me/player"
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-    }
-
+    headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
         data = response.json()
-        return data.get("shuffle_state", False)  # Return current shuffle state (True or False)
+        shuffle_state = data.get("shuffle_state", False)
+        logging.debug(f"Current shuffle state: {shuffle_state}")
+        return shuffle_state
     else:
-        logging.error(f"Error fetching player state: {response.status_code}")
+        logging.error(f"Error fetching player state: {response.status_code}, {response.text}")
         return None
 
+
 def toggle_shuffle(access_token):
-    """
-    Toggle shuffle state: if it's on, turn it off, and vice versa.
-    :param access_token: Spotify access token
-    """
-    # Get current shuffle state
     current_shuffle = get_current_shuffle_state(access_token)
 
     if current_shuffle is None:
         return "Error: Unable to fetch current shuffle state."
 
-    # Toggle shuffle state
-    new_state = not current_shuffle  # If shuffle is True, turn it off, else turn it on
+    new_state = not current_shuffle
     url = "https://api.spotify.com/v1/me/player/shuffle"
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-    }
-    params = {
-        "state": new_state,
-    }
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"state": new_state}
 
     response = requests.put(url, headers=headers, params=params)
 
     if response.status_code == 200:
         return f"Shuffle {'enabled' if new_state else 'disabled'} successfully."
     else:
-        logging.error(f"Error updating shuffle state: {response.status_code}")
+        logging.error(f"Error updating shuffle state: {response.status_code}, {response.text}")
         return "Error: Unable to update shuffle state."
+
 
 @app.route("/control", methods=["POST"])
 def control():
@@ -160,6 +146,23 @@ def control():
     logging.debug(f"Access token received: {access_token}")
 
     headers = {"Authorization": f"Bearer {access_token}"}
+
+    # Fetch current loop state from Spotify API
+    def get_current_loop_state(access_token):
+        url = "https://api.spotify.com/v1/me/player"
+        headers = {"Authorization": f"Bearer {access_token}"}
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            loop_state = data.get("repeat_state", "off")  # Default to "off" if no state is found
+            logging.debug(f"Current loop state: {loop_state}")
+            return loop_state
+        else:
+            logging.error(f"Error fetching player state: {response.status_code}, {response.text}")
+            return None
+
+    loop_state = get_current_loop_state(access_token)
 
     if action == "Play":
         response = requests.put(f"{SPOTIFY_API_URL}/play", headers=headers)

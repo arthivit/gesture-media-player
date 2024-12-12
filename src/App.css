@@ -1,38 +1,90 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.spotify-ui {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  background-color: #1db954;
+  padding: 20px;
+  border-radius: 15px;
   color: white;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
-.App-link {
-  color: #61dafb;
+.song-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-@keyframes App-logo-spin {
+.album-cover {
+  margin-right: 20px;
+}
+
+.album-cover img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.song-details h2 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.song-details .artists {
+  font-size: 1rem;
+  margin: 5px 0;
+  opacity: 0.8;
+}
+
+.song-details .album {
+  font-size: 1rem;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.playback-controls {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.playback-controls button {
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.playback-controls button:hover {
+  background: #444;
+}
+.gesture-notification {
+  position: fixed;
+  bottom: 20px; /* You can adjust this to position it as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: #fff;
+  padding: 15px 25px;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
   from {
-    transform: rotate(0deg);
+    transform: translateY(100px);
   }
   to {
-    transform: rotate(360deg);
+    transform: translateY(0);
   }
 }

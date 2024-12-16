@@ -1,15 +1,62 @@
-.spotify-ui {
+/* app.css */
+.container {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Stack everything vertically */
   align-items: center;
-  background-color: #1db954;
-  padding: 20px;
-  border-radius: 15px;
-  color: white;
-  max-width: 400px;
-  margin: 0 auto;
 }
 
+.main-content {
+  display: flex; /* Align "Now Playing" box and webcam feed side by side */
+  justify-content: space-between; /* Space between the two components */
+  width: 100%; /* Full width */
+  max-width: 1200px; /* Limit the width for better responsiveness */
+  margin-bottom: 10px; /* Space between the content and the buttons */
+}
+
+.song-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start; /* Align the song info to the left */
+  margin: 30px;
+  padding: 20px;
+  background-color: #f1f1f1;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 45%; /* Make it occupy 45% of the space */
+}
+
+.webcam-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 30px;
+  padding: 20px;
+  border-radius: 10px;
+  width: 45%; /* Make it occupy 45% of the space */
+}
+
+.webcam-container h3 {
+  margin: 0 0 10px 0; /* Reduce space below the heading */
+}
+
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #0c703c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #555;
+}
+
+/* Styling for the "Now Playing" box and album cover */
 .song-info {
   display: flex;
   align-items: center;
@@ -45,29 +92,9 @@
   opacity: 0.7;
 }
 
-.playback-controls {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 10px;
-}
-
-.playback-controls button {
-  background: #333;
-  color: white;
-  border: none;
-  border-radius: 25px;
-  padding: 10px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.playback-controls button:hover {
-  background: #444;
-}
 .gesture-notification {
   position: fixed;
-  bottom: 20px; /* You can adjust this to position it as needed */
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   background-color: #333;

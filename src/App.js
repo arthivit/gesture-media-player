@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GestureDetector from "./components/GestureDetector";
-import MediaControls from "./components/mediaControls";
+import MediaControls from "./components/MediaControls";
 
 const App = () => {
   const [gesture, setGesture] = useState("None");

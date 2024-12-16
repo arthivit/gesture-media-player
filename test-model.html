@@ -1,0 +1,9 @@
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script>
+  async function loadModel() {
+    const model = await tf.loadLayersModel('http://localhost:5001/model/model.json');
+    console.log("Model loaded:", model);
+  }
+  loadModel();
+</script>
+

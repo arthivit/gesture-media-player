@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import GestureDetector from "./components/GestureDetector";
 import MediaControls from "./components/MediaControls";
+import './App.css';
 
 const App = () => {
   const [webcamStream, setWebcamStream] = useState(null);
@@ -20,15 +21,16 @@ const App = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get("access_token");
     const refreshToken = urlParams.get("refresh_token");
-
+  
     if (accessToken && refreshToken) {
       // Store tokens in localStorage
       localStorage.setItem("access_token", accessToken);
       localStorage.setItem("refresh_token", refreshToken);
       console.log("Tokens stored in localStorage");
-
-      // Fetch initial playback state including loop and shuffle state
+  
+      // Fetch initial playback state and song info
       fetchPlaybackState(accessToken);
+      fetchSongInfo(accessToken); // Add this to fetch song info immediately after login
     }
     return () => {
       // Cleanup webcam stream on component unmount
@@ -50,35 +52,53 @@ const App = () => {
   };
 
   const handleGestureDetected = (detectedGesture) => {
+    if (detectedGesture === "None") return; // Ignore "None" gestures
+    console.log(`Gesture Detected: ${detectedGesture}`);
     setGesture(detectedGesture);
-    console.log(`Detected Gesture: ${detectedGesture}`);
 
     const accessToken = localStorage.getItem("access_token");
-    console.log(`Access Token: ${accessToken}`);
-
+  
     if (!accessToken) {
       console.error("No access token found");
       return;
     }
-
-    // Send the detected gesture to the backend
-    fetch("http://localhost:5001/control", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ action: detectedGesture }),
-    })
-      .then((response) => response.json())
-      .then(() => {
-        // Fetch song info after the action is processed
-        fetchSongInfo(accessToken);
+  
+    // Map gestures to actions and send them to the backend
+    const gestureActions = {
+      "Skip Forward": "Next",      // Skip Forward
+      "Skip Backward": "Previous", // Skip Backward
+      "Pause/Play": "PlayPause",   // Toggle Play/Pause
+      "Shuffle": "Shuffle",        // Toggle Shuffle
+      "Loop": "Loop",              // Toggle Loop
+      "Volume Up": "Volume Up",    // Increase volume
+      "Volume Down": "Volume Down",// Decrease volume
+      "Nothing": "Nothing",        // No action
+    };
+  
+    const action = gestureActions[detectedGesture];
+    if (action) {
+      console.log(`Triggering action: ${action}`);
+  
+      fetch("http://localhost:5001/control", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ action }),
       })
-      .catch((error) => console.error("Error sending gesture:", error));
-
-    // Show notification for the detected gesture
-    showNotification(`Gesture Recognized: ${detectedGesture}`);
+        .then((response) => response.json())
+        .then(() => {
+          // Update UI or playback state after the action is processed
+          fetchSongInfo(accessToken);
+        })
+        .catch((error) => console.error("Error sending gesture action:", error));
+  
+      // Optionally, show a notification
+      showNotification(`Gesture Triggered: ${detectedGesture}`);
+    } else {
+      console.log("No action mapped for this gesture.");
+    }
   };
 
   const fetchAlbumCover = (albumId, accessToken) => {
@@ -141,16 +161,34 @@ const App = () => {
         Authorization: `Bearer ${accessToken}`,
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          // Log the HTTP error status
+          console.error(`HTTP error! Status: ${response.status} ${response.statusText}`);
+          if (response.status === 204) {
+            console.warn("No active playback (204 No Content).");
+          }
+          return null; // Prevent parsing non-JSON or empty responses
+        }
+        return response.json(); // Parse JSON for valid responses
+      })
       .then((data) => {
         if (data) {
-          setShuffleState(data.shuffle_state);
-          setLoopState(data.repeat_state);
+          // Ensure shuffle and loop states are available in the response
+          if ("shuffle_state" in data && "repeat_state" in data) {
+            setShuffleState(data.shuffle_state);
+            setLoopState(data.repeat_state);
+            console.log("Playback state updated:", data);
+          } else {
+            console.warn("Shuffle or loop state missing in playback state response.");
+          }
         }
       })
-      .catch((error) => console.error("Error fetching playback state:", error));
+      .catch((error) => {
+        console.error("Error fetching playback state:", error);
+      });
   };
-
+  
   // Notification handler
   const showNotification = (message) => {
     const notification = document.createElement("div");
@@ -163,7 +201,7 @@ const App = () => {
     }, 3000); // Remove notification after 3 seconds
   };
 
-  // Toggle shuffle state and notify about it
+  /* // Toggle shuffle state and notify about it
   const toggleShuffle = () => {
     const accessToken = localStorage.getItem("access_token");
 
@@ -223,26 +261,19 @@ const App = () => {
       })
       .catch((error) => console.error("Error toggling loop:", error));
   };
-
+ */
   const handleSpotifyLogin = () => {
     window.location.href = "http://localhost:5001/login";
   };
 
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
+    <div className="container">
       <h1>Gesture-Based Media Player</h1>
-      <div>
-        <h2>Detected Gesture: {gesture}</h2>
+      <div style={{ marginTop: "20px" }}>
+        <button onClick={handleSpotifyLogin}>Login to Spotify</button>
       </div>
-  
-      <div 
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-        }}
-      >
+      <div className="main-content">
+      <div className="webcam-container">
         {/* Spotify-style box around Now Playing and Album Cover */}
         <div 
           style={{
@@ -283,23 +314,11 @@ const App = () => {
           </div>
         </div>
       </div>
-  
-      {/* Centered Webcam Feed */}
-      <div 
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <h3>Webcam Feed</h3>
+      <div className="webcam-container">
+      <h3>Webcam Feed</h3>
         <video 
           autoPlay 
           playsInline 
-          style={{ 
-            width: "500px", 
-            height: "500px",  
-          }} 
           ref={(video) => {
             if (video && webcamStream) {
               video.srcObject = webcamStream;
@@ -307,10 +326,15 @@ const App = () => {
           }}
         />
       </div>
-  
+    </div>
       <GestureDetector onGestureDetected={handleGestureDetected} />
       <MediaControls onGestureDetected={handleGestureDetected} />
-      <button onClick={toggleShuffle}>
+    </div>
+  );  
+};
+
+export default App;
+/**<button onClick={toggleShuffle}>
         {shuffleState ? "Disable Shuffle" : "Enable Shuffle"}
       </button>
       <button onClick={toggleLoop}>
@@ -319,13 +343,4 @@ const App = () => {
           : loopState === "track"
           ? "Loop Track"
           : "Loop Context"}
-      </button>
-  
-      <div style={{ marginTop: "20px" }}>
-        <button onClick={handleSpotifyLogin}>Login to Spotify</button>
-      </div>
-    </div>
-  );  
-};
-
-export default App;
+      </button> */
